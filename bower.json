@@ -1,0 +1,32 @@
+{
+  "name": "Tanks",
+  "version": "1.0.0",
+  "homepage": "https://github.com/unpxre/tanks",
+  "authors": [
+    "Kajetan Hrynczuk"
+  ],
+  "description": "Tanks game",
+  "main": "src/index.js",
+  "moduleType": [
+    "es6",
+    "node"
+  ],
+  "keywords": [
+    "tanks",
+    "node",
+    "1990"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "src/static/libs",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "socket.io": "~1.5.1",
+    "easeljs": "~0.8.2"
+  }
+}
