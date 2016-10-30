@@ -26,7 +26,8 @@
     "tests"
   ],
   "dependencies": {
-    "socket.io": "~1.5.1",
-    "easeljs": "~0.8.2"
+    "easeljs": "~0.8.2",
+    "lodash": "~4.16.4",
+    "socket.io-client": "~1.5.1"
   }
 }

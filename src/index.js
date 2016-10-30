@@ -1,10 +1,22 @@
-var express = require('express');
-var app = express();
+"use strict";
 
-app.get('/', function (req, res) {
-  res.send('Hello World!');
-});
+let express = require("express");
+let app = express();
+let http = require('http').Server(app);
+let io = require('socket.io')(http);
+let haml = require('hamljs');
+let fs = require('fs');
+let game = require('./game');
 
-app.listen(3000, function () {
-  console.log('Example app listening on port 3000!');
-});
+app.use('/static', express.static('src/static'));
+
+app.get('/', (req, res) => {
+  let hamlView = fs.readFileSync( './src/views/index.haml', 'utf8' );
+    res.end( haml.render(hamlView, { locals: { key: 'value' } }) );
+} );
+
+game.run( io, app );
+
+http.listen(80, () => {
+  console.log('listening on *:80');
+} );
