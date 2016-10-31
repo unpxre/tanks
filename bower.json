@@ -28,6 +28,8 @@
   "dependencies": {
     "easeljs": "~0.8.2",
     "lodash": "~4.16.4",
-    "socket.io-client": "~1.5.1"
+    "socket.io-client": "~1.5.1",
+    "jquery": "~3.1.1",
+    "TweenJS": "~0.6.2"
   }
 }

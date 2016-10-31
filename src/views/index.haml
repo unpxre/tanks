@@ -2,5 +2,13 @@
 %html
   %head
     %title Tanks game
+    %script{ "type": "text/javascript", "src": "static/libs/lodash/lodash.js"}
     %script{ "type": "text/javascript", "src": "static/libs/socket.io-client/socket.io.js"}
+    %script{ "type": "text/javascript", "src": "static/libs/jquery/dist/jquery.min.js"}
+    %script{ "type": "text/javascript", "src": "static/libs/easeljs/lib/easeljs-0.8.2.min.js"}
+    %script{ "type": "text/javascript", "src": "static/libs/TweenJS/lib/tweenjs-0.6.2.min.js"}
     %script{ "type": "text/javascript", "src": "static/game.js"}
+    %link{ "rel": "stylesheet", "type": "text/css", "href": "static/style.css"}
+  %body
+    Tanks game
+    %canvas{ "id": "gameCanvas", "width": "700", "height": "700" }

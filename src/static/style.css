@@ -1,0 +1,17 @@
+html, body {
+  margin: 0px;
+  padding: 0px;
+  background-color: #000;
+  color: #fff;
+  overflow: hidden;
+}
+
+#gameCanvas {
+  border: 1px solid red;
+  position: absolute;
+  left: 50%;
+  width: 700px;
+  margin-left: -350px;
+  margin-top: 50px;
+  max-height: calc( 100% - 100px ) !important;
+}
