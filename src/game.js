@@ -32,12 +32,12 @@ const MAP = [
 
 
 class Player {
-  constructor(socket) {
+  constructor(socket, x , y) {
     this.socket = socket;
     this.id = socket.id;
     this.hearbeatNum = 0;
-    this.x = 0;
-    this.y = 0;
+    this.x = x;
+    this.y = y;
     this.direction = 'N';
     this.name = "NAME";
   }
@@ -61,9 +61,26 @@ class Game {
     this.map = _.cloneDeep( MAP );
   }
 
+  _checkCollision( x, y, newX, newY ) {
+    if ( ( newX > x - TANK_SIZE && newX < x + TANK_SIZE ) && ( newY > y - TANK_SIZE && newY < y + TANK_SIZE ) ) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
   addPlayer( socket ) {
     if ( (this.players.length < this.MAX_PLAYERS) && !_.find( this.players, { socket: socket } ) ) {
-      let player = new Player( socket );
+      let initX = 0;
+      let initY = 0;
+      while ( this.isCollision( initX, initY ) ) {
+        initY += 50;
+        if ( initY > 500 ) {
+          return false;
+        }
+      }
+
+      let player = new Player( socket, initX, initY );
       this.players.push( player );
       return player;
     } else {
@@ -88,19 +105,24 @@ class Game {
     return this.players;
   }
 
-  isCollision( newX, newY ) {
-    console.log( 'checks for collision', newX, newY );
+  isCollision( newX, newY, checkingPlayer ) {
     let isCollision = false;
-
     // Checks for map objects collision
     _.forEach( this.map, ( line, y ) => {
       _.forEach( line, ( mapObj, x ) => {
         if ( !isCollision && mapObj > 1 ) {
-          if ( ( newX > x * TANK_SIZE - TANK_SIZE && newX < x * TANK_SIZE + TANK_SIZE ) && ( newY > y * TANK_SIZE - TANK_SIZE && newY < y * TANK_SIZE + TANK_SIZE ) ) {
+          if ( this._checkCollision( x * TANK_SIZE, y * TANK_SIZE, newX, newY ) ) {
             isCollision = true;
           }
         }
       } );
+    } );
+
+    // Checks for other tank collision
+    _.forEach( this.players, ( player )=> {
+      if ( ( ( checkingPlayer && checkingPlayer.id !== player.id ) || !checkingPlayer ) && this._checkCollision( player.x, player.y, newX, newY ) ) {
+        isCollision = true;
+      }
     } );
 
     return isCollision;
@@ -161,7 +183,7 @@ module.exports = {
             break;
         }
 
-        if ( !game.isCollision( newX, newY ) ) {
+        if ( !game.isCollision( newX, newY, player ) ) {
           player.x = newX;
           player.y = newY;
         }

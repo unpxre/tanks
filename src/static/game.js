@@ -136,7 +136,7 @@ $(document).ready( () => {
 
      if ( leftPlayer ) {
        console.log(`Player (${leftPlayer.socketId}) left game`);
-       stage.removeChild( leftPlayer.tank );
+       playersContainer.removeChild( leftPlayer.tank );
        _.remove( game.players, leftPlayer );
      }
   } );
