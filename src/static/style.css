@@ -1,17 +1,20 @@
 html, body {
   margin: 0px;
   padding: 0px;
-  background-color: #000;
-  color: #fff;
+  background: #000 url('../static/img/iron_wall.jpg') center top;
+  color: #000;
+  text-shadow: 0 0 2px #fff;
+  font-weight: bold;
+  font-size: 30px;
   overflow: hidden;
 }
 
 #gameCanvas {
-  border: 1px solid red;
   position: absolute;
   left: 50%;
   width: 700px;
   margin-left: -350px;
   margin-top: 50px;
   max-height: calc( 100% - 100px ) !important;
+  background: #000;
 }

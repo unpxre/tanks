@@ -17,6 +17,6 @@ app.get('/', (req, res) => {
 
 game.run( io, app );
 
-http.listen(80, () => {
+http.listen(80, 'localhost', () => {
   console.log('listening on *:80');
 } );
