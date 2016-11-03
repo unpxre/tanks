@@ -13,7 +13,7 @@ let createPlayerObject = (player, stage) => {
   }
 };
 
-let movedPlayerTo = ( player, x, y, direction ) => {
+let movePlayerTo = ( player, x, y, direction ) => {
   let rotation = 0;
   switch( direction ) {
     case 'S':
@@ -34,6 +34,23 @@ let movedPlayerTo = ( player, x, y, direction ) => {
   player.direction = direction;
 };
 
+let createBulletObject = (bullet, stage) => {
+  let image = new Image();
+  image.src = "./static/img/bullet.jpg";
+  image.onload = function(evt) {
+    let bulletCanvasObj = new createjs.Bitmap(evt.target);
+    bulletCanvasObj.x = bullet.x;
+    bulletCanvasObj.y = bullet.y;
+    bulletCanvasObj.regX = 2;
+    bulletCanvasObj.regY = 2;
+    stage.addChild( bulletCanvasObj );
+    bullet.bulletCanvasObj = bulletCanvasObj;
+  }
+};
+
+let moveBulletTo = ( bullet, x, y ) => {
+  createjs.Tween.get(bullet.bulletCanvasObj).to( { x: x, y: y }, 100);
+};
 
 let loadMapImgs = ( cb ) => {
   let forestImage = new Image();
@@ -55,7 +72,7 @@ let loadMapImgs = ( cb ) => {
   }
 };
 
-let createMap = ( map, stage ) => {
+let createMap = ( map, mapBackgroundContainer, mapForeGroundContainer ) => {
   loadMapImgs( ( forestImage, brickImage, wtaherImage, ironImage ) => {
     _.forEach( map, ( line, y ) => {
       _.forEach( line, ( mapObj, x ) => {
@@ -64,25 +81,25 @@ let createMap = ( map, stage ) => {
             let forest = new createjs.Bitmap( forestImage );
             forest.x = 50 * x;
             forest.y = 50 * y;
-            stage.addChild( forest );
+            mapForeGroundContainer.addChild( forest );
             break;
           case 2:
             let brick = new createjs.Bitmap( brickImage );
             brick.x = 50 * x;
             brick.y = 50 * y;
-            stage.addChild( brick );
+            mapBackgroundContainer.addChild( brick );
             break;
           case 3:
             let wather = new createjs.Bitmap( wtaherImage );
             wather.x = 50 * x;
             wather.y = 50 * y;
-            stage.addChild( wather );
+            mapBackgroundContainer.addChild( wather );
             break;
           case 4:
             let iron = new createjs.Bitmap( ironImage );
             iron.x = 50 * x;
             iron.y = 50 * y;
-            stage.addChild( iron );
+            mapBackgroundContainer.addChild( iron );
             break;
         }
       } );
@@ -95,10 +112,14 @@ $(document).ready( () => {
   let game = player = undefined;
   let stage = new createjs.Stage( document.getElementById("gameCanvas") );
   let playersContainer = new createjs.Container();
-  let mapContainer = new createjs.Container();
+  let mapBackgroundContainer = new createjs.Container();
+  let bulletsContainer = new createjs.Container();
+  let mapForeGroundContainer = new createjs.Container();
 
   stage.addChild(playersContainer);
-  stage.addChild(mapContainer);
+  stage.addChild(mapBackgroundContainer);
+  stage.addChild(bulletsContainer);
+  stage.addChild(mapForeGroundContainer);
 
   socket.on('connect', () => {
       sessionId = socket.io.engine.id;
@@ -119,7 +140,7 @@ $(document).ready( () => {
        createPlayerObject( player, playersContainer );
      } );
 
-     createMap( data.gameData.map, mapContainer);
+     createMap( data.gameData.map, mapBackgroundContainer, mapForeGroundContainer);
 
   } );
 
@@ -127,7 +148,7 @@ $(document).ready( () => {
      let movedPlayer = _.find( game.players, { socketId: data.playerSocket } );
 
      if ( movedPlayer ) {
-       movedPlayerTo( movedPlayer, data.playerX, data.playerY, data.direction );
+       movePlayerTo( movedPlayer, data.playerX, data.playerY, data.direction );
      }
   } );
 
@@ -149,6 +170,33 @@ $(document).ready( () => {
     }
   } );
 
+  socket.on('createBullet', (data) => {
+    if ( !_.find( game.bullets, { playerSocketId: data.bullet.playerSocketId } ) ) {
+      console.log(`New bullet fired by (${data.bullet.playerSocketId})`);
+      game.bullets.push( data.bullet );
+      createBulletObject( data.bullet, bulletsContainer );
+    }
+  } );
+
+  socket.on('bulletMoved', (data) => {
+     let movedBullet = _.find( game.bullets, { playerSocketId: data.bulletPlayerSocketId } );
+
+     if ( movedBullet ) {
+       console.log('bulletMoved', data.x, data.y);
+       moveBulletTo( movedBullet, data.x, data.y );
+     }
+  } );
+
+  socket.on('bulletDestroyed', (data) => {
+     let destoroyedBullett = _.find( game.bullets, { playerSocketId: data.bulletPlayerSocketId } );
+
+     if ( destoroyedBullett ) {
+       bulletsContainer.removeChild( destoroyedBullett.bulletCanvasObj );
+       _.remove( game.bullets, destoroyedBullett );
+     }
+  } );
+
+
   let tick = ()=> {
     stage.update();
   }
@@ -159,20 +207,24 @@ $(document).ready( () => {
     switch (e.keyCode) {
         case 37:
         case 65:
-            socket.emit('move', 'left');
-            break;
+          socket.emit('move', 'left');
+          break;
         case 38:
         case 87:
-            socket.emit('move', 'up');
-            break;
+          socket.emit('move', 'up');
+          break;
         case 39:
         case 68:
           socket.emit('move', 'right');
-            break;
+          break;
         case 40:
         case 83:
-            socket.emit('move', 'down');
-            break;
+          socket.emit('move', 'down');
+          break;
+        case 70:
+        case 32:
+          socket.emit('fire');
+          break;
     }
   }, 100 );
 } );

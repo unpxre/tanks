@@ -31,6 +31,83 @@ const MAP = [
 ];
 
 
+class Bullet {
+  constructor( x, y, direction, playerRef, gameRef, ioRef ) {
+    switch ( direction ) {
+      case 'N':
+        this.x = x + TANK_SIZE/2 -2;
+        this.y = y -2;
+        break;
+      case 'S':
+        this.x = x + TANK_SIZE/2 -2;
+        this.y = y + TANK_SIZE;
+        break;
+      case 'W':
+        this.x = x;
+        this.y = y + TANK_SIZE/2 -2;
+        break;
+      case 'E':
+        this.x = x + TANK_SIZE -2;
+        this.y = y + TANK_SIZE/2 -2;
+        break;
+    }
+    this.direction = direction;
+    this.playerRef = playerRef;
+    this.gameRef = gameRef;
+    this.ioRef = ioRef;
+
+    this.ioRef.emit('createBullet', {
+      bullet: this.getPublicBullet()
+    } );
+    this.moveInterval = setInterval(() => { this.moveBullet() }, 100);
+  }
+
+  removeBullet() {
+    clearInterval( this.moveInterval );
+    this.playerRef.bullet = null;
+    this.ioRef.emit('bulletDestroyed', {
+      bulletPlayerSocketId: this.playerRef.socket.id
+    } );
+  }
+
+  moveBullet() {
+    if ( ( this.x < 0 || this.x > ARENA_SIZE ) || ( this.y < 0 || this.y > ARENA_SIZE ) ) {
+      this.removeBullet();
+    } else {
+      switch ( this.direction ) {
+        case 'N':
+          this.y -= 20;
+          break;
+        case 'S':
+          this.y += 20;
+          break;
+        case 'W':
+          this.x -= 20;
+          break;
+        case 'E':
+          this.x += 20;
+          break;
+      }
+
+      this.ioRef.emit('bulletMoved', {
+        x: this.x,
+        y: this.y,
+        bulletPlayerSocketId: this.playerRef.socket.id
+      } );
+    }
+  }
+
+  getPublicBullet() {
+    return {
+      x: this.x,
+      y: this.y,
+      direction: this.direction,
+      playerSocketId: this.playerRef.socket.id
+    }
+  }
+
+}
+
 class Player {
   constructor(socket, x , y) {
     this.socket = socket;
@@ -40,6 +117,7 @@ class Player {
     this.y = y;
     this.direction = 'N';
     this.name = "NAME";
+    this.bullet = null;
   }
 
   getPublicPlayer() {
@@ -97,6 +175,7 @@ class Game {
         players: _.map( this.players, (player) => {
           return player.getPublicPlayer();
         } ),
+        bullets: [], // TODO: send current bullets
         map: this.map
       }
   }
@@ -133,7 +212,6 @@ let game = new Game();
 
 module.exports = {
   run: (io, app) => {
-
     // On connection
 		io.on('connection', (socket)  => {
       let player = undefined;
@@ -195,6 +273,12 @@ module.exports = {
           direction: player.direction
         } );
 			} );
+
+      socket.on('fire', ()  => {
+        if ( !player.bullet ) {
+          player.bullet = new Bullet( player.x, player.y, player.direction, player, game, io );
+        }
+      } );
     } );
 
 		// Hearbeat
