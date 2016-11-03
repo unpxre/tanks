@@ -8,6 +8,8 @@ let haml = require('hamljs');
 let fs = require('fs');
 let game = require('./game');
 
+app.set('port', (process.env.PORT || 80));
+
 app.use('/static', express.static('src/static'));
 
 app.get('/', (req, res) => {
@@ -17,6 +19,6 @@ app.get('/', (req, res) => {
 
 game.run( io, app );
 
-http.listen(80, 'localhost', () => {
+http.listen(app.get('port'), () => {
   console.log('listening on *:80');
 } );
