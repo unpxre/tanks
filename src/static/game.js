@@ -49,7 +49,9 @@ let createBulletObject = (bullet, stage) => {
 };
 
 let moveBulletTo = ( bullet, x, y ) => {
-  createjs.Tween.get(bullet.bulletCanvasObj).to( { x: x, y: y }, 100);
+  if ( bullet.bulletCanvasObj ) {
+    createjs.Tween.get(bullet.bulletCanvasObj).to( { x: x, y: y }, 100);
+  }
 };
 
 let loadMapImgs = ( cb ) => {
@@ -73,6 +75,9 @@ let loadMapImgs = ( cb ) => {
 };
 
 let createMap = ( map, mapBackgroundContainer, mapForeGroundContainer ) => {
+  mapBackgroundContainer.removeAllChildren();
+  mapForeGroundContainer.removeAllChildren();
+
   loadMapImgs( ( forestImage, brickImage, wtaherImage, ironImage ) => {
     _.forEach( map, ( line, y ) => {
       _.forEach( line, ( mapObj, x ) => {
@@ -81,30 +86,38 @@ let createMap = ( map, mapBackgroundContainer, mapForeGroundContainer ) => {
             let forest = new createjs.Bitmap( forestImage );
             forest.x = 50 * x;
             forest.y = 50 * y;
+            forest.name = `${x}${y}`;
             mapForeGroundContainer.addChild( forest );
             break;
           case 2:
             let brick = new createjs.Bitmap( brickImage );
             brick.x = 50 * x;
             brick.y = 50 * y;
+            brick.name = `${x}${y}`;
             mapBackgroundContainer.addChild( brick );
             break;
           case 3:
             let wather = new createjs.Bitmap( wtaherImage );
             wather.x = 50 * x;
             wather.y = 50 * y;
+            wather.name = `${x}${y}`;
             mapBackgroundContainer.addChild( wather );
             break;
           case 4:
             let iron = new createjs.Bitmap( ironImage );
             iron.x = 50 * x;
             iron.y = 50 * y;
+            iron.name = `${x}${y}`;
             mapBackgroundContainer.addChild( iron );
             break;
         }
       } );
     } );
   } );
+};
+
+let removeBrick = ( x, y, mapBackgroundContainer) => {
+  mapBackgroundContainer.removeChild( mapBackgroundContainer.getChildByName(`${x}${y}`) );
 };
 
 $(document).ready( () => {
@@ -125,6 +138,10 @@ $(document).ready( () => {
       sessionId = socket.io.engine.id;
       console.log('Connected ' + sessionId);
       socket.emit('joinToGame', {});
+  });
+
+  socket.on('disconnect', () => {
+      alert('Game Over ;(');
   });
 
   socket.on('error', (reason) => {
@@ -155,10 +172,16 @@ $(document).ready( () => {
   socket.on('playerLeft', (data) => {
      let leftPlayer = _.find( game.players, { socketId: data.playerSocket } );
 
+     console.log('data', data, player);
+
      if ( leftPlayer ) {
        console.log(`Player (${leftPlayer.socketId}) left game`);
        playersContainer.removeChild( leftPlayer.tank );
        _.remove( game.players, leftPlayer );
+
+       if ( leftPlayer.socketId === player.socketId ) {
+         alert( 'Game Over' );
+       }
      }
   } );
 
@@ -182,7 +205,6 @@ $(document).ready( () => {
      let movedBullet = _.find( game.bullets, { playerSocketId: data.bulletPlayerSocketId } );
 
      if ( movedBullet ) {
-       console.log('bulletMoved', data.x, data.y);
        moveBulletTo( movedBullet, data.x, data.y );
      }
   } );
@@ -191,11 +213,20 @@ $(document).ready( () => {
      let destoroyedBullett = _.find( game.bullets, { playerSocketId: data.bulletPlayerSocketId } );
 
      if ( destoroyedBullett ) {
-       bulletsContainer.removeChild( destoroyedBullett.bulletCanvasObj );
-       _.remove( game.bullets, destoroyedBullett );
+       setTimeout( () => {
+         bulletsContainer.removeChild( destoroyedBullett.bulletCanvasObj );
+         _.remove( game.bullets, destoroyedBullett );
+       }, 10 );
      }
   } );
 
+  socket.on('brickDestroyed', (data) => {
+     removeBrick( data.x, data.y, mapBackgroundContainer);
+  } );
+
+  socket.on('playerDestroyed', ( destroyedPlayer ) => {
+     console.log(`Player (${destroyedPlayer.playerSocketId}) destroyed!`);
+  } );
 
   let tick = ()=> {
     stage.update();
