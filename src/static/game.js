@@ -28,6 +28,16 @@ let createNatiObject = (nati, stage) => {
   }
 };
 
+let createBlood = (x, y, stage) => {
+  let image = new Image();
+  image.src = "./static/img/blood.png";
+  image.onload = (evt) => {
+    let bloodImage = new createjs.Bitmap(evt.target);
+    bloodImage.x = x;
+    bloodImage.y = y;
+    stage.addChild( bloodImage );
+  }
+};
 
 let moveNatiTo = ( nati, x, y ) => {
   if ( nati && nati.natiImage ) {
@@ -94,7 +104,6 @@ let loadMapImgs = ( cb ) => {
         let ironImage = new Image();
         ironImage.src = "./static/img/iron_wall.jpg";
         ironImage.onload = (ironEvt) => {
-          console.log(forestEvt.target, ironEvt.target);
           cb( forestObj, brickObj, watherObj, ironEvt.target );
         }
       }
@@ -154,12 +163,14 @@ $(document).ready( () => {
   let stage = new createjs.Stage( document.getElementById("gameCanvas") );
   let playersContainer = new createjs.Container();
   let mapBackgroundContainer = new createjs.Container();
+  let bloodContainer = new createjs.Container();
   let natiContainer = new createjs.Container();
   let bulletsContainer = new createjs.Container();
   let mapForeGroundContainer = new createjs.Container();
 
-  stage.addChild( playersContainer );
   stage.addChild( mapBackgroundContainer );
+  stage.addChild( bloodContainer );
+  stage.addChild( playersContainer );
   stage.addChild( natiContainer );
   stage.addChild( bulletsContainer );
   stage.addChild( mapForeGroundContainer );
@@ -189,9 +200,8 @@ $(document).ready( () => {
 
      createMap( data.gameData.map, mapBackgroundContainer, mapForeGroundContainer);
 
-     if ( data.gameData.nati ) {
+     if ( data.gameData.nati && data.gameData.nati.x && data.gameData.nati.y ) {
        nati = data.gameData.nati;
-       console.log('try to create Nati', nati);
        createNatiObject( nati, natiContainer );
      }
 
@@ -202,6 +212,12 @@ $(document).ready( () => {
 
      if ( movedPlayer ) {
        movePlayerTo( movedPlayer, data.playerX, data.playerY, data.direction );
+     }
+
+     if ( data.natiKilled && nati ) {
+       natiContainer.removeAllChildren();
+       createBlood(nati.x, nati.y, bloodContainer);
+       nati = undefined;
      }
   } );
 

@@ -138,7 +138,13 @@ class Nati {
 
     gameRef.setNatiCords( this.x, this.y );
 
-    setInterval( ()=> { this.moveNati(); }, 200 );
+    this.interval = setInterval( ()=> { this.moveNati(); }, 200 );
+  }
+
+  killself() {
+    console.log('Nati killed');
+    clearInterval( this.interval );
+    this.x = this.y = undefined;
   }
 
   moveNati() {
@@ -304,7 +310,7 @@ class Game {
         bullets: [], // TODO: send current bullets
         nati: {
           x: this.natiX,
-          y: this.natiX
+          y: this.natiY
         },
         map: this.map
       }
@@ -336,6 +342,10 @@ class Game {
 
     return isCollision;
   }
+
+  isCollisionWithNati( x, y ) {
+    return ( this.natiX && this.natiY && this._checkCollision( this.natiX, this.natiY, x, y, TANK_SIZE ) );
+  }
 }
 
 let game = new Game();
@@ -348,7 +358,7 @@ module.exports = {
 		io.on('connection', (socket)  => {
       let player = undefined;
       socket.on('joinToGame', () => {
-        if( game.players < 1 && !game.natiX && !game.natiY && !nati ) {
+        if( game.players.length < 1 && !game.natiX && !game.natiY && !nati ) {
           console.log('Created Nati');
           game.map = _.cloneDeep( MAP );
           nati = new Nati( (9 * TANK_SIZE), (13 * TANK_SIZE), game, io );
@@ -404,11 +414,20 @@ module.exports = {
           player.y = newY;
         }
 
+        let natiKilled = game.isCollisionWithNati( player.x, player.y );
+
+        if ( natiKilled ) {
+          game.setNatiCords( undefined, undefined );
+          nati.killself();
+          nati = undefined;
+        }
+
         io.emit('playerMoved', {
           playerSocket: player.socket.id,
           playerX: player.x,
           playerY: player.y,
-          direction: player.direction
+          direction: player.direction,
+          natiKilled: natiKilled
         } );
 			} );
 
