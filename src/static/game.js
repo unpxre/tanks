@@ -82,16 +82,20 @@ let loadMapImgs = ( cb ) => {
   let forestImage = new Image();
   forestImage.src = "./static/img/forest.gif";
   forestImage.onload = (forestEvt) => {
+    let forestObj = forestEvt.target;
     let brickImage = new Image();
     brickImage.src = "./static/img/brick_wall.jpg";
     brickImage.onload = (brickEvt) => {
+      let brickObj = brickEvt.target;
       let watherImage = new Image();
       watherImage.src = "./static/img/wather.jpg";
       watherImage.onload = (watherEvt) => {
+        let watherObj = watherEvt.target;
         let ironImage = new Image();
         ironImage.src = "./static/img/iron_wall.jpg";
         ironImage.onload = (ironEvt) => {
-          cb( forestEvt.target, brickEvt.target, watherEvt.target, ironEvt.target );
+          console.log(forestEvt.target, ironEvt.target);
+          cb( forestObj, brickObj, watherObj, ironEvt.target );
         }
       }
     }
