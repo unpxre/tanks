@@ -129,6 +129,57 @@ class Bullet {
 
 }
 
+class Nati {
+  constructor(x , y, gameRef, ioRef) {
+    this.x = x;
+    this.y = y;
+    this.gameRef = gameRef;
+    this.ioRef = ioRef;
+
+    gameRef.setNatiCords( this.x, this.y );
+
+    setInterval( ()=> { this.moveNati(); }, 200 );
+  }
+
+  moveNati() {
+    let moveX = this.x;
+    let moveY = this.y;
+    let move = _.random(0, 3);
+    switch ( move ) {
+      case 0:
+        if ( this.x < ( ARENA_SIZE - TANK_SIZE ) ) {
+          moveX += MOVE_SIZE;
+        }
+        break;
+      case 1:
+        if ( this.x >= MOVE_SIZE ) {
+          moveX -= MOVE_SIZE;
+        }
+        break;
+      case 2:
+        if ( this.y < ( ARENA_SIZE - TANK_SIZE ) ) {
+          moveY += MOVE_SIZE;
+        }
+        break;
+      case 3:
+        if ( this.y >= MOVE_SIZE + TANK_SIZE ) {
+          moveY -= MOVE_SIZE;
+        }
+        break;
+    }
+
+    if ( !this.gameRef.isCollision( moveX, moveY ) ) {
+      this.x = moveX;
+      this.y = moveY;
+    }
+
+    this.ioRef.emit('natiMoved', {
+      x: this.x,
+      y: this.y
+    } );
+  }
+}
+
 class Player {
   constructor(socket, x , y) {
     this.socket = socket;
@@ -153,11 +204,13 @@ class Player {
 }
 
 class Game {
-  constructor() {
+  constructor( ) {
     this.MAX_PLAYERS = 5;
 
     this.players = [];
     this.map = _.cloneDeep( MAP );
+
+
   }
 
   _checkCollision( x, y, newX, newY, size ) {
@@ -238,12 +291,21 @@ class Game {
     _.remove( this.players, { socket: socket } );
   }
 
+  setNatiCords( x, y) {
+    this.natiX = x;
+    this.natiY = y;
+  }
+
   getGameData() {
       return {
         players: _.map( this.players, (player) => {
           return player.getPublicPlayer();
         } ),
         bullets: [], // TODO: send current bullets
+        nati: {
+          x: this.natiX,
+          y: this.natiX
+        },
         map: this.map
       }
   }
@@ -277,13 +339,21 @@ class Game {
 }
 
 let game = new Game();
+let nati = undefined;
 
 module.exports = {
   run: (io, app) => {
+
     // On connection
 		io.on('connection', (socket)  => {
       let player = undefined;
       socket.on('joinToGame', () => {
+        if( game.players < 1 && !game.natiX && !game.natiY && !nati ) {
+          console.log('Created Nati');
+          game.map = _.cloneDeep( MAP );
+          nati = new Nati( (9 * TANK_SIZE), (13 * TANK_SIZE), game, io );
+        }
+
         console.log(`New player ${socket.id} connected`);
         player = game.addPlayer( socket );
         if ( player ) {

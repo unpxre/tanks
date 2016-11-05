@@ -2,7 +2,7 @@
 let createPlayerObject = (player, stage) => {
   let image = new Image();
   image.src = "./static/img/tank1.png";
-  image.onload = function(evt) {
+  image.onload = (evt) => {
     let tank = new createjs.Bitmap(evt.target);
     tank.x = player.x + 25;
     tank.y = player.y + 25;
@@ -10,6 +10,30 @@ let createPlayerObject = (player, stage) => {
     tank.regY = 25;
     stage.addChild( tank );
     player.tank = tank;
+  }
+};
+
+let createNatiObject = (nati, stage) => {
+  if ( nati && stage ) {
+    let image = new Image();
+    image.src = "./static/img/nati.png";
+    image.onload = (evt) => {
+      let natiImage = new createjs.Bitmap(evt.target);
+      natiImage.x = nati.x;
+      natiImage.y = nati.y - 50;
+      stage.addChild( natiImage );
+      nati.natiImage = natiImage;
+      console.log('Nati crated', nati);
+    }
+  }
+};
+
+
+let moveNatiTo = ( nati, x, y ) => {
+  if ( nati && nati.natiImage ) {
+    createjs.Tween.get(nati.natiImage).to({x: x, y: y - 50}, 100);
+    nati.x = x;
+    nati.y = y;
   }
 };
 
@@ -37,7 +61,7 @@ let movePlayerTo = ( player, x, y, direction ) => {
 let createBulletObject = (bullet, stage) => {
   let image = new Image();
   image.src = "./static/img/bullet.jpg";
-  image.onload = function(evt) {
+  image.onload = (evt) => {
     let bulletCanvasObj = new createjs.Bitmap(evt.target);
     bulletCanvasObj.x = bullet.x;
     bulletCanvasObj.y = bullet.y;
@@ -57,16 +81,16 @@ let moveBulletTo = ( bullet, x, y ) => {
 let loadMapImgs = ( cb ) => {
   let forestImage = new Image();
   forestImage.src = "./static/img/forest.gif";
-  forestImage.onload = function(forestEvt) {
+  forestImage.onload = (forestEvt) => {
     let brickImage = new Image();
     brickImage.src = "./static/img/brick_wall.jpg";
-    brickImage.onload = function(brickEvt) {
+    brickImage.onload = (brickEvt) => {
       let watherImage = new Image();
       watherImage.src = "./static/img/wather.jpg";
-      watherImage.onload = function(watherEvt) {
+      watherImage.onload = (watherEvt) => {
         let ironImage = new Image();
         ironImage.src = "./static/img/iron_wall.jpg";
-        ironImage.onload = function(ironEvt) {
+        ironImage.onload = (ironEvt) => {
           cb( forestEvt.target, brickEvt.target, watherEvt.target, ironEvt.target );
         }
       }
@@ -122,17 +146,19 @@ let removeBrick = ( x, y, mapBackgroundContainer) => {
 
 $(document).ready( () => {
   let socket = io.connect(document.domain);
-  let game = player = undefined;
+  let game = player = nati = undefined;
   let stage = new createjs.Stage( document.getElementById("gameCanvas") );
   let playersContainer = new createjs.Container();
   let mapBackgroundContainer = new createjs.Container();
+  let natiContainer = new createjs.Container();
   let bulletsContainer = new createjs.Container();
   let mapForeGroundContainer = new createjs.Container();
 
-  stage.addChild(playersContainer);
-  stage.addChild(mapBackgroundContainer);
-  stage.addChild(bulletsContainer);
-  stage.addChild(mapForeGroundContainer);
+  stage.addChild( playersContainer );
+  stage.addChild( mapBackgroundContainer );
+  stage.addChild( natiContainer );
+  stage.addChild( bulletsContainer );
+  stage.addChild( mapForeGroundContainer );
 
   socket.on('connect', () => {
       sessionId = socket.io.engine.id;
@@ -159,6 +185,12 @@ $(document).ready( () => {
 
      createMap( data.gameData.map, mapBackgroundContainer, mapForeGroundContainer);
 
+     if ( data.gameData.nati ) {
+       nati = data.gameData.nati;
+       console.log('try to create Nati', nati);
+       createNatiObject( nati, natiContainer );
+     }
+
   } );
 
   socket.on('playerMoved', (data) => {
@@ -167,6 +199,10 @@ $(document).ready( () => {
      if ( movedPlayer ) {
        movePlayerTo( movedPlayer, data.playerX, data.playerY, data.direction );
      }
+  } );
+
+  socket.on('natiMoved', (data) => {
+     moveNatiTo( nati, data.x, data.y);
   } );
 
   socket.on('playerLeft', (data) => {
